@@ -37,9 +37,9 @@
 
 enum DialogIDs {
     DIALOG_NONE,
-    DIALOG_REPORT,
+    DIALOG_SEND_REPORT,
     DIALOG_REPORTS,
-    DIALOG_MANAGE_REPORT
+    DIALOG_ANSWER_REPORT
 }
 
 enum Report {
@@ -50,15 +50,16 @@ enum Report {
 
 
 new reports[MAX_REPORTS][Report];
-
-new playerReports[MAX_PLAYERS][REPORTS_PER_PAGE];
-new playerReportsPage[MAX_PLAYERS];
-new playerCurrentReport[MAX_PLAYERS];
 new reportsQueue[MAX_REPORTS];
 new reportsAmount;
 
+new playerReportsOnPage[MAX_PLAYERS][REPORTS_PER_PAGE];
+new playerReportsPage[MAX_PLAYERS];
+new playerCurrentReport[MAX_PLAYERS];
+
+
 cmd:report(playerid) {
-    ShowPlayerDialog(playerid, DIALOG_REPORT, DIALOG_STYLE_INPUT, "Репорт", "Напишите свой репорт:", "Отправить", "Отмена");
+    ShowPlayerDialog(playerid, DIALOG_SEND_REPORT, DIALOG_STYLE_INPUT, "Репорт", "Напишите свой репорт:", "Отправить", "Отмена");
 }
 
 stock ShowPlayerReportsDialog(playerid, page) {
@@ -77,7 +78,7 @@ stock ShowPlayerReportsDialog(playerid, page) {
         new report = reportsQueue[i];
         new name[MAX_PLAYER_NAME];
         GetPlayerName(reports[report][rAuthor], name);
-        playerReports[playerid][j] = reportsQueue[i];
+        playerReportsOnPage[playerid][j] = reportsQueue[i];
         format(str, sizeof(str), "%s%s\t%s\n", str, name, reports[report][rText]);
     }
     
@@ -127,7 +128,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
             inputtext[i] = '#';
     
     switch(dialogid) {
-        case DIALOG_REPORT: {
+        case DIALOG_SEND_REPORT: {
             if (!response) return 1;
             if (!strlen(inputtext)) return SendClientMessage(playerid, -1, "Напишите что-нибудь");
             if (!TryCreateReport(playerid, inputtext)) return SendClientMessage(playerid, -1, "Не удалось создать репорт");
@@ -138,13 +139,13 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
             if (listitem == 0 && playerReportsPage[playerid] != 0) return ShowPlayerReportsDialog(playerid, playerReportsPage[playerid] - 1);
             if (listitem == REPORTS_PER_PAGE && playerReportsPage[playerid] == 0 || listitem == REPORTS_PER_PAGE + 1 && playerReportsPage[playerid] != 0) return ShowPlayerReportsDialog(playerid, playerReportsPage[playerid] + 1);
             
-            new chosenReport = reportsQueue[(playerReportsPage[playerid] == 0 ? listitem : listitem - 1) + playerReportsPage[playerid] * REPORTS_PER_PAGE];
+            new chosenReport = playerReportsOnPage[playerid][(playerReportsPage[playerid] == 0 ? listitem : listitem - 1)];
             if (!reports[chosenReport][rExists]) return ShowPlayerReportsDialog(playerid, playerReportsPage[playerid]);
             playerCurrentReport[playerid] = chosenReport;
-            return ShowPlayerDialog(playerid, DIALOG_MANAGE_REPORT, DIALOG_STYLE_INPUT, "Title", reports[chosenReport][rText], "Ответ", "Отмена");
+            return ShowPlayerDialog(playerid, DIALOG_ANSWER_REPORT, DIALOG_STYLE_INPUT, "Title", reports[chosenReport][rText], "Ответ", "Отмена");
         }
-        case DIALOG_MANAGE_REPORT: {
-            if (!response) return 1;
+        case DIALOG_ANSWER_REPORT: {
+            if (!response) return ShowPlayerReportsDialog(playerid, playerReportsPage[playerid]);
             
             SendClientMessage(reports[playerCurrentReport[playerid]][rAuthor], -1, "Вам ответили:");
             SendClientMessage(reports[playerCurrentReport[playerid]][rAuthor], -1, inputtext);
