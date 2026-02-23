@@ -145,7 +145,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
             return ShowPlayerDialog(playerid, DIALOG_ANSWER_REPORT, DIALOG_STYLE_INPUT, "Title", reports[chosenReport][rText], "Ответ", "Отмена");
         }
         case DIALOG_ANSWER_REPORT: {
-            if (!response) return ShowPlayerReportsDialog(playerid, playerReportsPage[playerid]);
+            if (!response || !reports[playerCurrentReport[playerid]][rExists]) return ShowPlayerReportsDialog(playerid, playerReportsPage[playerid]);
             
             SendClientMessage(reports[playerCurrentReport[playerid]][rAuthor], -1, "Вам ответили:");
             SendClientMessage(reports[playerCurrentReport[playerid]][rAuthor], -1, inputtext);
